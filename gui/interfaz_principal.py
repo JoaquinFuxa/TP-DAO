@@ -5,6 +5,7 @@ from gui.interfaz_registro_cliente import InterfazRegistroCliente
 from gui.interfaz_registro_venta import InterfazRegistroVenta
 from gui.interfaz_registro_servicio import InterfazRegistroServicio
 from gui.interfaz_registro_vendedor import InterfazRegistroVendedor
+from gui.interfaz_consulta_autos_vendidos import InterfazConsultaAutosVendidos
 
 class Aplicacion:
     def __init__(self, root):
@@ -27,6 +28,7 @@ class Aplicacion:
         self.frame_venta = InterfazRegistroVenta(self.contenedor)
         self.frame_servicio = InterfazRegistroServicio(self.contenedor)
         self.frame_vendedor = InterfazRegistroVendedor(self.contenedor)
+        self.frame_autos_vendidos = InterfazConsultaAutosVendidos(self.contenedor)
 
         # Agregar las páginas al contenedor
         self.contenedor.add(self.frame_auto, text="Registrar Auto")
@@ -34,4 +36,5 @@ class Aplicacion:
         self.contenedor.add(self.frame_vendedor, text="Registrar Vendedor")
         self.contenedor.add(self.frame_venta, text="Registrar Venta")
         self.contenedor.add(self.frame_servicio, text="Registrar Servicio")
+        self.contenedor.add(self.frame_autos_vendidos, text="Consultar Autos")
         
