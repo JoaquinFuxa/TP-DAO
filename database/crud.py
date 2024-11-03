@@ -148,17 +148,14 @@ def obtener_vendedores():
     return vendedores
 
 
-
-
-
-
-
-
-
-
-
-
-
+# Obtener datos de servicio de un determinado auto
+def obtener_servicios_por_auto(vin):
+    conn = sqlite3.connect("concesionaria.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT id_servicio, vin, tipo_servicio, fecha, costo FROM servicios WHERE vin = ?", (vin,))
+    servicio = cursor.fetchall()
+    conn.close()
+    return servicio
 
 
 
