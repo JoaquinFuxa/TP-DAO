@@ -1,8 +1,11 @@
 import sqlite3
+from .database_connection import DatabaseConnection  # Importa DatabaseConnection
 
 def crear_base_de_datos():
-    conn = sqlite3.connect('concesionaria.db')
-    cursor = conn.cursor()
+    #conn = sqlite3.connect('concesionaria.db')
+    #cursor = conn.cursor()
+    db = DatabaseConnection()
+    cursor = db.get_connection().cursor()
 
     # Crear tabla autos
     cursor.execute('''
@@ -65,7 +68,7 @@ def crear_base_de_datos():
         )
     ''')
     
-      # Crear tabla comisiones para almacenar las comisiones de las ventas
+    # Crear tabla comisiones para almacenar las comisiones de las ventas
     cursor.execute(''' 
         CREATE TABLE IF NOT EXISTS comisiones ( 
             id_comision INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -77,8 +80,9 @@ def crear_base_de_datos():
     ''')
 
 
-    conn.commit()
-    conn.close()
+    db.get_connection().commit()
+    #onn.commit()
+    #conn.close()
 
 def cargar_datos_mock():
     conn = sqlite3.connect('concesionaria.db')
