@@ -98,6 +98,10 @@ class InterfazReportes(ttk.Frame):
             cursor.close()
 
     def ingresos_totales(self):
+        # Crear una nueva ventana para mostrar los ingresos totales
+        ventana_ingresos = tk.Toplevel(self)
+        ventana_ingresos.title("Ingresos Totales")
+        
         db = DatabaseConnection()  # Crear conexión a la base de datos
         cursor = db.get_connection().cursor()
 
@@ -113,23 +117,31 @@ class InterfazReportes(ttk.Frame):
         # Calcular el total de servicios
         cursor.execute("SELECT SUM(costo) FROM servicios")
         total_servicios = cursor.fetchone()[0] or 0  # Manejar caso de NULL
+        
+        # Mostrar los resultados en etiquetas
+        ttk.Label(ventana_ingresos, text="Total Ventas:").grid(row=0, column=0, padx=10, pady=10, sticky='w')
+        ttk.Label(ventana_ingresos, text=f"${total_ventas:.2f}").grid(row=0, column=1, padx=10, pady=10, sticky='w')
+        ttk.Label(ventana_ingresos, text="Total Servicios:").grid(row=1, column=0, padx=10, pady=10, sticky='w')
+        ttk.Label(ventana_ingresos, text=f"${total_servicios:.2f}").grid(row=1, column=1, padx=10, pady=10, sticky='w')
 
         # Mostrar los resultados
-        self.total_ventas.config(text=f"${total_ventas:.2f}")
-        self.total_servicios.config(text=f"${total_servicios:.2f}")
+        #self.total_ventas.config(text=f"${total_ventas:.2f}")
+        #self.total_servicios.config(text=f"${total_servicios:.2f}")
 
         # Empaquetar las etiquetas solo cuando se genera el reporte
-        if not self.ventas_visible:
+        #if not self.ventas_visible:
             # Colocar las etiquetas en la cuadrícula
-            self.label_ventas.grid(row=4, column=0, pady=10, sticky='w')
-            self.total_ventas.grid(row=4, column=1, pady=10, sticky='w')
-            self.label_servicios.grid(row=5, column=0, pady=10, sticky='w')
-            self.total_servicios.grid(row=5, column=1, pady=10, sticky='w')
-            self.ventas_visible = True  # Marcar que las etiquetas ya se mostraron
+        #    self.label_ventas.grid(row=4, column=0, pady=10, sticky='w')
+        #    self.total_ventas.grid(row=4, column=1, pady=10, sticky='w')
+        #    self.label_servicios.grid(row=5, column=0, pady=10, sticky='w')
+        #    self.total_servicios.grid(row=5, column=1, pady=10, sticky='w')
+        #    self.ventas_visible = True  # Marcar que las etiquetas ya se mostraron
 
     def autos_mas_vendidos(self):
-        # Aquí implementas la lógica para mostrar los autos más vendidos por marca
-        print("Autos más vendidos por marca")
+        # Crear una nueva ventana para mostrar los autos más vendidos
+        ventana_autos_vendidos = tk.Toplevel(self)
+        ventana_autos_vendidos.title("Autos Más Vendidos por Marca")
+        
         db = DatabaseConnection()
         cursor = db.get_connection().cursor()
 
@@ -144,23 +156,24 @@ class InterfazReportes(ttk.Frame):
         
         resultados = cursor.fetchall()
 
-        # Limpiar resultados anteriores
-        for widget in self.autos_mas_vendidos_frame.winfo_children():
-            widget.destroy()
+        if resultados:
+            # Crear un diccionario para almacenar la marca y el modelo más vendido
+            marcas_mas_vendidas = {}
+            for marca, modelo, total_ventas in resultados:
+                if marca not in marcas_mas_vendidas or total_ventas > marcas_mas_vendidas[marca][1]:
+                    marcas_mas_vendidas[marca] = (modelo, total_ventas)
 
-        # Crear un diccionario para almacenar el modelo más vendido por marca
-        autos_mas_vendidos = {}
-        for marca, modelo, total in resultados:
-            if marca not in autos_mas_vendidos:
-                autos_mas_vendidos[marca] = (modelo, total)
+            # Títulos de las columnas
+            ttk.Label(ventana_autos_vendidos, text="Marca").grid(row=0, column=0)
+            ttk.Label(ventana_autos_vendidos, text="Modelo Más Vendido").grid(row=0, column=1)
+            ttk.Label(ventana_autos_vendidos, text="Total Ventas").grid(row=0, column=2)
 
-        # Mostrar los resultados solo cuando se genera el reporte
-        if not self.autos_visible:
-            self.label_autos_mas_vendidos.grid(row=4, column=0, sticky='w')
-            self.autos_visible = True
+            # Mostrar el modelo más vendido por marca
+            for idx, (marca, (modelo, total_ventas)) in enumerate(marcas_mas_vendidas.items(), start=1):
+                ttk.Label(ventana_autos_vendidos, text=marca).grid(row=idx, column=0)
+                ttk.Label(ventana_autos_vendidos, text=modelo).grid(row=idx, column=1)
+                ttk.Label(ventana_autos_vendidos, text=total_ventas).grid(row=idx, column=2)
 
-        # Colocar los resultados en el contenedor
-        for idx, (marca, (modelo, total)) in enumerate(autos_mas_vendidos.items()):
-            ttk.Label(self.autos_mas_vendidos_frame, text=f"Marca: {marca}, Modelo: {modelo}, Ventas: {total}").grid(row=idx, column=0, sticky='w')
-        
+        else:
+            messagebox.showinfo("Información", "No se encontraron autos vendidos.")
 
