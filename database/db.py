@@ -1,9 +1,6 @@
-import sqlite3
 from .database_connection import DatabaseConnection  # Importa DatabaseConnection
 
 def crear_base_de_datos():
-    #conn = sqlite3.connect('concesionaria.db')
-    #cursor = conn.cursor()
     db = DatabaseConnection()
     cursor = db.get_connection().cursor()
 
@@ -85,8 +82,8 @@ def crear_base_de_datos():
     #conn.close()
 
 def cargar_datos_mock():
-    conn = sqlite3.connect('concesionaria.db')
-    cursor = conn.cursor()
+    db = DatabaseConnection()
+    cursor = db.get_connection().cursor()
 
     # Verificar si ya hay datos en la tabla clientes
     cursor.execute('SELECT COUNT(*) FROM clientes')
@@ -120,8 +117,7 @@ def cargar_datos_mock():
         ]
         cursor.executemany('INSERT INTO autos (vin, marca, modelo, anio, precio, estado) VALUES (?, ?, ?, ?, ?, ?)', autos)
 
-    conn.commit()
-    conn.close()
+    db.get_connection().commit()
 
 # Crear la base de datos
 crear_base_de_datos()
