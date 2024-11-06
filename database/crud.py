@@ -167,6 +167,3 @@ def consultar_servicios_auto(vin):
     servicios = cursor.fetchall()
     conn.close()
     return servicios
-
-import sqlite3
-

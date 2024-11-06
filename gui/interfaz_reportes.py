@@ -1,8 +1,8 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, simpledialog, messagebox
 from database.database_connection import DatabaseConnection
-from tkinter import simpledialog
-import tkinter.messagebox as messagebox
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
 class InterfazReportes(ttk.Frame):
     def __init__(self, parent):
@@ -15,165 +15,116 @@ class InterfazReportes(ttk.Frame):
         # Título de la interfaz
         ttk.Label(self, text="Consultas de Reportes", font=("Arial", 14, "bold")).grid(row=0, column=0, columnspan=2, pady=(10, 20))
 
-        # Botón para "Listado de ventas por periodo"
-        self.boton_listado_ventas = ttk.Button(self, text="Listado de ventas por periodo", command=self.listado_ventas_por_periodo)
+        # Botón para "Listado de ventas por periodo" - Genera PDF
+        self.boton_listado_ventas = ttk.Button(self, text="Listado de ventas por periodo (PDF)", command=self.listado_ventas_por_periodo)
         self.boton_listado_ventas.grid(row=1, column=0, columnspan=2, sticky="ew", padx=10, pady=10)
 
-        # Botón para "Ingresos totales por venta de autos y servicios"
-        self.boton_ingresos_totales = ttk.Button(self, text="Ingresos totales por venta de autos y servicios", command=self.ingresos_totales)
+        # Botón para "Ingresos totales por venta de autos y servicios" - Genera PDF
+        self.boton_ingresos_totales = ttk.Button(self, text="Ingresos totales (PDF)", command=self.ingresos_totales)
         self.boton_ingresos_totales.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=10)
 
-        # Botón para "Autos más vendidos por marca"
-        self.boton_autos_mas_vendidos = ttk.Button(self, text="Autos más vendidos por marca", command=self.autos_mas_vendidos)
+        # Botón para "Autos más vendidos por marca" - Genera PDF
+        self.boton_autos_mas_vendidos = ttk.Button(self, text="Autos más vendidos por marca (PDF)", command=self.autos_mas_vendidos)
         self.boton_autos_mas_vendidos.grid(row=3, column=0, columnspan=2, sticky="ew", padx=10, pady=10)
 
-        # Inicializar las etiquetas para mostrar los totales, pero no las configuramos aún
-        self.label_ventas = ttk.Label(self, text="Total Ventas:")
-        self.total_ventas = ttk.Label(self, text="$0.00")  # Widget para mostrar total de ventas
-        self.label_servicios = ttk.Label(self, text="Total Servicios:")
-        self.total_servicios = ttk.Label(self, text="$0.00")  # Widget para mostrar total de servicios
-        # Inicializar el estado de visibilidad
-        self.ventas_visible = False
-        
-        # Inicializar las etiquetas para mostrar los autos más vendidos
-        self.label_autos_mas_vendidos = ttk.Label(self, text="Autos más vendidos por marca:")
-        self.autos_mas_vendidos_frame = ttk.Frame(self)  # Contenedor para los resultados
-        self.autos_mas_vendidos_frame.grid(row=4, column=0, columnspan=2, pady=10, sticky='w')
-        # Esta variable controlará la visibilidad del contenedor
-        self.autos_visible = False
 
     def listado_ventas_por_periodo(self):
-        # Aquí implementas la lógica para mostrar el listado de ventas por periodo
-        print("Listado de ventas por periodo")
-        # Crear un cuadro de diálogo para ingresar las fechas
         fecha_inicio = simpledialog.askstring("Fecha de inicio", "Ingrese la fecha de inicio (DD/MM/AAAA):")
         fecha_fin = simpledialog.askstring("Fecha de fin", "Ingrese la fecha de fin (DD/MM/AAAA):")
-
-        # Validar las fechas ingresadas
+        
         if not fecha_inicio or not fecha_fin:
             messagebox.showwarning("Advertencia", "Ambas fechas son obligatorias.")
             return
 
-        # Conectar a la base de datos
         db = DatabaseConnection()
         cursor = db.get_connection().cursor()
-
-        # Realizar la consulta
+        
         try:
-            # La consulta se realiza en el formato correcto para SQLite
             cursor.execute("""
                 SELECT id_venta, vin, cliente_id, fecha_venta, vendedor_id
                 FROM ventas
-                WHERE fecha_venta BETWEEN ? AND ?
+                WHERE strftime('%Y-%m-%d', fecha_venta) BETWEEN strftime('%Y-%m-%d', ?) AND strftime('%Y-%m-%d', ?)
             """, (fecha_inicio, fecha_fin))
-
             resultados = cursor.fetchall()
+            
+            # Crear PDF
+            pdf = canvas.Canvas("reporte_ventas_por_periodo.pdf", pagesize=A4)
+            pdf.drawString(100, 800, f"Listado de Ventas del {fecha_inicio} al {fecha_fin}")
+            
+            y_position = 750
+            pdf.drawString(50, y_position, "ID Venta")
+            pdf.drawString(120, y_position, "VIN")
+            pdf.drawString(250, y_position, "Cliente ID")
+            pdf.drawString(370, y_position, "Fecha Venta")
+            pdf.drawString(500, y_position, "Vendedor ID")
 
-            # Verificar si se encontraron resultados
-            if resultados:
-                # Crear una nueva ventana para mostrar los resultados
-                ventana_resultados = tk.Toplevel(self)
-                ventana_resultados.title("Resultados de Ventas")
-                
-                # Títulos de las columnas
-                ttk.Label(ventana_resultados, text="ID Venta").grid(row=0, column=0)
-                ttk.Label(ventana_resultados, text="VIN").grid(row=0, column=1)
-                ttk.Label(ventana_resultados, text="Cliente ID").grid(row=0, column=2)
-                ttk.Label(ventana_resultados, text="Fecha Venta").grid(row=0, column=3)
-                ttk.Label(ventana_resultados, text="Vendedor ID").grid(row=0, column=4)
+            y_position -= 20
+            for id_venta, vin, cliente_id, fecha_venta, vendedor_id in resultados:
+                pdf.drawString(50, y_position, str(id_venta))
+                pdf.drawString(100, y_position, vin)
+                pdf.drawString(150, y_position, str(cliente_id))
+                pdf.drawString(200, y_position, fecha_venta)
+                pdf.drawString(250, y_position, str(vendedor_id))
+                y_position -= 20
 
-                # Crear tabla
-                for idx, (id_venta, vin, cliente_id, fecha_venta, vendedor_id) in enumerate(resultados, start=1):
-                    ttk.Label(ventana_resultados, text=f"{id_venta}").grid(row=idx, column=0)
-                    ttk.Label(ventana_resultados, text=f"{vin}").grid(row=idx, column=1)
-                    ttk.Label(ventana_resultados, text=f"{cliente_id}").grid(row=idx, column=2)
-                    ttk.Label(ventana_resultados, text=f"{fecha_venta}").grid(row=idx, column=3)
-                    ttk.Label(ventana_resultados, text=f"{vendedor_id}").grid(row=idx, column=4)
-            else:
-                messagebox.showinfo("Información", "No se encontraron ventas en el rango de fechas especificado.")
-
+            pdf.save()
+            messagebox.showinfo("Reporte generado", "El reporte de ventas se ha guardado como PDF.")
+        
         except Exception as e:
             messagebox.showerror("Error", str(e))
         finally:
             cursor.close()
 
     def ingresos_totales(self):
-        # Crear una nueva ventana para mostrar los ingresos totales
-        ventana_ingresos = tk.Toplevel(self)
-        ventana_ingresos.title("Ingresos Totales")
-        
-        db = DatabaseConnection()  # Crear conexión a la base de datos
+        db = DatabaseConnection()
         cursor = db.get_connection().cursor()
-
-        ## VER SI ESTE CALCULO ESTA BIEN O SERIA LA SUMA DE LAS COMISIONES DE LOS VENDEDORES
-        # Calcular el total de ventas sumando el precio de los autos relacionados con las ventas
-        cursor.execute("""
-            SELECT SUM(a.precio) 
-            FROM ventas v 
-            JOIN autos a ON v.vin = a.vin
-        """)
-        total_ventas = cursor.fetchone()[0] or 0  # Manejar caso de NULL
-
-        # Calcular el total de servicios
-        cursor.execute("SELECT SUM(costo) FROM servicios")
-        total_servicios = cursor.fetchone()[0] or 0  # Manejar caso de NULL
         
-        # Mostrar los resultados en etiquetas
-        ttk.Label(ventana_ingresos, text="Total Ventas:").grid(row=0, column=0, padx=10, pady=10, sticky='w')
-        ttk.Label(ventana_ingresos, text=f"${total_ventas:.2f}").grid(row=0, column=1, padx=10, pady=10, sticky='w')
-        ttk.Label(ventana_ingresos, text="Total Servicios:").grid(row=1, column=0, padx=10, pady=10, sticky='w')
-        ttk.Label(ventana_ingresos, text=f"${total_servicios:.2f}").grid(row=1, column=1, padx=10, pady=10, sticky='w')
+        try:
+            cursor.execute("SELECT SUM(a.precio) FROM ventas v JOIN autos a ON v.vin = a.vin")
+            total_ventas = cursor.fetchone()[0] or 0
 
-        # Mostrar los resultados
-        #self.total_ventas.config(text=f"${total_ventas:.2f}")
-        #self.total_servicios.config(text=f"${total_servicios:.2f}")
-
-        # Empaquetar las etiquetas solo cuando se genera el reporte
-        #if not self.ventas_visible:
-            # Colocar las etiquetas en la cuadrícula
-        #    self.label_ventas.grid(row=4, column=0, pady=10, sticky='w')
-        #    self.total_ventas.grid(row=4, column=1, pady=10, sticky='w')
-        #    self.label_servicios.grid(row=5, column=0, pady=10, sticky='w')
-        #    self.total_servicios.grid(row=5, column=1, pady=10, sticky='w')
-        #    self.ventas_visible = True  # Marcar que las etiquetas ya se mostraron
+            cursor.execute("SELECT SUM(costo) FROM servicios")
+            total_servicios = cursor.fetchone()[0] or 0
+            
+            # Crear PDF
+            pdf = canvas.Canvas("reporte_ingresos_totales.pdf", pagesize=A4)
+            pdf.drawString(100, 800, "Ingresos Totales")
+            pdf.drawString(100, 750, f"Total Ventas: ${total_ventas:.2f}")
+            pdf.drawString(100, 730, f"Total Servicios: ${total_servicios:.2f}")
+            pdf.save()
+            messagebox.showinfo("Reporte generado", "El reporte de ingresos totales se ha guardado como PDF.")
+        
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+        finally:
+            cursor.close()
 
     def autos_mas_vendidos(self):
-        # Crear una nueva ventana para mostrar los autos más vendidos
-        ventana_autos_vendidos = tk.Toplevel(self)
-        ventana_autos_vendidos.title("Autos Más Vendidos por Marca")
-        
         db = DatabaseConnection()
         cursor = db.get_connection().cursor()
 
-        # Consulta para obtener el total de ventas por modelo y marca
-        cursor.execute("""
-            SELECT a.marca, a.modelo, COUNT(v.id_venta) AS total_ventas
-            FROM autos a
-            JOIN ventas v ON a.vin = v.vin
-            GROUP BY a.marca, a.modelo
-            ORDER BY a.marca, total_ventas DESC;
-        """)
-        
-        resultados = cursor.fetchall()
-
-        if resultados:
-            # Crear un diccionario para almacenar la marca y el modelo más vendido
-            marcas_mas_vendidas = {}
+        try:
+            cursor.execute("""
+                SELECT a.marca, a.modelo, COUNT(v.id_venta) AS total_ventas
+                FROM autos a
+                JOIN ventas v ON a.vin = v.vin
+                GROUP BY a.marca, a.modelo
+                ORDER BY a.marca, total_ventas DESC;
+            """)
+            resultados = cursor.fetchall()
+            
+            pdf = canvas.Canvas("reporte_autos_mas_vendidos.pdf", pagesize=A4)
+            pdf.drawString(100, 800, "Autos Más Vendidos por Marca")
+            y_position = 750
+            
             for marca, modelo, total_ventas in resultados:
-                if marca not in marcas_mas_vendidas or total_ventas > marcas_mas_vendidas[marca][1]:
-                    marcas_mas_vendidas[marca] = (modelo, total_ventas)
+                pdf.drawString(50, y_position, f"{marca} - {modelo}: {total_ventas} ventas")
+                y_position -= 20
 
-            # Títulos de las columnas
-            ttk.Label(ventana_autos_vendidos, text="Marca").grid(row=0, column=0)
-            ttk.Label(ventana_autos_vendidos, text="Modelo Más Vendido").grid(row=0, column=1)
-            ttk.Label(ventana_autos_vendidos, text="Total Ventas").grid(row=0, column=2)
-
-            # Mostrar el modelo más vendido por marca
-            for idx, (marca, (modelo, total_ventas)) in enumerate(marcas_mas_vendidas.items(), start=1):
-                ttk.Label(ventana_autos_vendidos, text=marca).grid(row=idx, column=0)
-                ttk.Label(ventana_autos_vendidos, text=modelo).grid(row=idx, column=1)
-                ttk.Label(ventana_autos_vendidos, text=total_ventas).grid(row=idx, column=2)
-
-        else:
-            messagebox.showinfo("Información", "No se encontraron autos vendidos.")
-
+            pdf.save()
+            messagebox.showinfo("Reporte generado", "El reporte de autos más vendidos se ha guardado como PDF.")
+        
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+        finally:
+            cursor.close()

@@ -84,6 +84,9 @@ class InterfazRegistroServicio(ttk.Frame):
         if not self.validar_fecha(fecha):
             messagebox.showerror("Error", "La fecha debe estar en formato dd/mm/yyyy.")
             return
+        
+        # Convertir fecha al formato correcto YYYY-MM-DD
+        fecha = datetime.strptime(fecha, "%d/%m/%Y").strftime("%Y-%m-%d")
 
         # Registrar el servicio
         if registrar_servicio(vin, descripcion, fecha, costo):

@@ -91,6 +91,9 @@ class InterfazRegistroVenta(ttk.Frame):
         except ValueError:
             messagebox.showerror("Error", "El monto de la comisión debe ser un número válido.")
             return
+        
+        # Convertir fecha al formato correcto YYYY-MM-DD
+        fecha = datetime.strptime(fecha, "%d/%m/%Y").strftime("%Y-%m-%d")
 
         # Registrar la venta
         if registrar_venta(vin, cliente_id, fecha, vendedor_id, comision):

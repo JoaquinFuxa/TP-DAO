@@ -38,7 +38,7 @@ def crear_base_de_datos():
             id_venta INTEGER PRIMARY KEY AUTOINCREMENT,
             vin TEXT,
             cliente_id INTEGER,
-            fecha_venta TEXT,
+            fecha_venta DATE,
             vendedor_id INTEGER,
             FOREIGN KEY(vin) REFERENCES autos(vin),
             FOREIGN KEY(cliente_id) REFERENCES clientes(id_cliente),
@@ -52,7 +52,7 @@ def crear_base_de_datos():
             id_servicio INTEGER PRIMARY KEY AUTOINCREMENT,
             vin TEXT,
             tipo_servicio TEXT,
-            fecha TEXT,
+            fecha DATE,
             costo REAL,
             FOREIGN KEY(vin) REFERENCES autos(vin)
         )
@@ -74,7 +74,7 @@ def crear_base_de_datos():
             id_comision INTEGER PRIMARY KEY AUTOINCREMENT, 
             vendedor_id INTEGER, 
             monto REAL, 
-            fecha TEXT, 
+            fecha DATE, 
             FOREIGN KEY(vendedor_id) REFERENCES vendedores(id_vendedor) 
         ) 
     ''')
